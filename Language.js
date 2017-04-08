@@ -1,3 +1,7 @@
+// Takes a string as input and returns an object
+// containing the data structure for the expression
+// at the start of the string, along with the part
+// of the string left after parsing this expression. 
 function parseExpression(program) {
   program = skipSpace(program);
   var match, expr;
@@ -13,13 +17,16 @@ function parseExpression(program) {
   return parseApply(expr, program.slice(match[0].length));
 }
 
+// Repeatedly cuts the whitespace off the start of
+// the program string
 function skipSpace(string) {
   var first = string.search(/\S/);
   if (first == -1) return "";
   return string.slice(first);
 }
 
-
+// Checks whether the expression is an application.
+// If so, it parses a parenthesized list of arguments.
 function parseApply(expr, program) {
   program = skipSpace(program);
   if (program[0] != "(")
@@ -39,7 +46,9 @@ function parseApply(expr, program) {
   return parseApply(expr, program.slice(1));
 }
 
-
+// Verifies that it has reached the end of the input 
+// string after parsing the expression, and that gives
+// us the program’s data structure.
 function parse(program) {
   var result = parseExpression(program);
   if (skipSpace(result.rest).length > 0)
@@ -47,7 +56,8 @@ function parse(program) {
   return result.expr;
 }
 
-
+// Evaluates the expression that the syntax tree represents
+// and returns the value that this produces
 function evaluate(expr, env) {
   switch(expr.type) {
     case "value":
@@ -73,8 +83,10 @@ function evaluate(expr, env) {
   }
 }
 
+// The specialForms object is used to define special
+// syntax in our language. It associates words with 
+// functions that evaluate such special forms. 
 var specialForms = Object.create(null);
-
 
 specialForms["if"] = function(args, env) {
   if (args.length != 3)
@@ -93,7 +105,7 @@ specialForms["while"] = function(args, env) {
   while (evaluate(args[0], env) !== false)
     evaluate(args[1], env);
 
-  // Since undefined does not exist in Egg, we return false,
+  // Since undefined does not exist in our language, we return false,
   // for lack of a meaningful result.
   return false;
 };
@@ -114,6 +126,11 @@ specialForms["define"] = function(args, env) {
   return value;
 };
 
+// To be able to use the if construct we just defined,
+// we must have access to Boolean values. Since there are
+// only two Boolean values, we do not need special syntax
+// for them. We simply bind two variables to the values
+// true and false and use those.
 var topEnv = Object.create(null);
 
 topEnv["true"] = true;
@@ -136,7 +153,7 @@ function run() {
   return evaluate(parse(program), env);
 }
 
-
+// Sample run of the program
 /*
 run("do(define(total, 0),",
     "   define(count, 1),",
@@ -146,7 +163,9 @@ run("do(define(total, 0),",
     "   print(total))");
 */
 
-
+// Treats its last argument as the function’s body
+// and treats all the arguments before that as the
+// names of the function’s arguments.
 specialForms["fun"] = function(args, env) {
   if (!args.length)
     throw new SyntaxError("Functions need a body");
